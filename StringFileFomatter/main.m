@@ -20,8 +20,8 @@ int main(int argc, const char * argv[])
         // insert code here...
         
         NSLog(@"*****************************************************************************");
-        NSLog(@"ana <file>                Analysis a string file, with output on Desktop");
-        NSLog(@"merge <file1> <file2>     Merge file2 to file1; If filename is Empty , use ouputs of 'ana'commend");
+        NSLog(@"analysis <file>           Analysis a string file, with output on Desktop");
+        NSLog(@"merge                     Merge file 'UnDealed' into 'Modified' ");
         NSLog(@"q                         Quit");
         NSLog(@"*****************************************************************************");
         
@@ -31,7 +31,7 @@ int main(int argc, const char * argv[])
         NSString *command;
         
         while ( ![command isEqualToString:@"q"] ) {
-            NSLog(@"Next Command:");
+            NSLog(@"Enter a command:");
             scanf("%s", &strCmd);
             command = [NSString stringWithUTF8String:strCmd];
             
