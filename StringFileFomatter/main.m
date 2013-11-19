@@ -75,7 +75,6 @@ void analysis(NSString *path) {
         s = [s stringByTrimmingCharactersInSet:[NSCharacterSet newlineCharacterSet]];
         if ( [s length] == 0 ) continue;
         if ( [s hasPrefix:@"//"] ) continue;
-        s = [s stringByAppendingString:@"\n"];
         
         
         // Step 1: 替换全角字符
@@ -88,7 +87,7 @@ void analysis(NSString *path) {
         s = [s stringByReplacingOccurrencesOfString:@"%は@" withString:@"%@"];
         s = [s stringByReplacingOccurrencesOfString:@"%の@" withString:@"%@"];
         s = [s stringByReplacingOccurrencesOfString:@"\";\";" withString:@"\";"];
-        if ( ![s hasSuffix:@"=\"\";\n"] ) {
+        if ( ![s hasSuffix:@"=\"\";"] ) {
             s = [s stringByReplacingOccurrencesOfString:@"=\"\"" withString:@"=\""];
             s = [s stringByReplacingOccurrencesOfString:@"\"\";" withString:@"\";"];
         }
@@ -102,11 +101,44 @@ void analysis(NSString *path) {
         NSArray *arrayOfAllMatches = [regex matchesInString:s options:0 range:NSMakeRange(0, [s length])];
         
         if ( [arrayOfAllMatches count] == 0 ) {
+            s = [s stringByAppendingString:@"\n"];
             [errorData appendData:[s dataUsingEncoding:NSUTF8StringEncoding]];
             continue;
         }
         
         // Step 3: 匹配key和content中的占位符顺序和数量是否相等
+        NSArray *array = [s componentsSeparatedByString:@"="];
+        if ( [array count] < 2 ) continue;
+        NSString *left = [array objectAtIndex:0];
+        NSString *right = [array objectAtIndex:1];
+        NSString *leftPlaceholders = @"";
+        NSString *rightPlaceholders = @"";
+        
+        regulaStr = @"%[0-9]*[d|@|u|f|lf|ld]";
+        regex = [NSRegularExpression regularExpressionWithPattern:regulaStr options:NSRegularExpressionCaseInsensitive error:&error];
+        NSArray *arrayOfMatchesLeft = [regex matchesInString:left options:0 range:NSMakeRange(0, [left length])];
+        NSArray *arrayOfMatchesRight = [regex matchesInString:right options:0 range:NSMakeRange(0, [right length])];
+        if ( [arrayOfMatchesLeft count] == 0 ) continue; // 若key中无占位符, 则忽略这条
+        
+        for ( int i = 0; i < [arrayOfMatchesLeft count]; i++ ) {
+            NSTextCheckingResult* result = [arrayOfMatchesLeft objectAtIndex:i];
+            NSString *placeholder = [left substringWithRange:result.range];
+            leftPlaceholders = [leftPlaceholders stringByAppendingString:placeholder];
+        }
+        
+        for ( int i = 0; i < [arrayOfMatchesRight count]; i++ ) {
+            NSTextCheckingResult* result = [arrayOfMatchesRight objectAtIndex:i];
+            NSString *placeholder = [right substringWithRange:result.range];
+            rightPlaceholders = [rightPlaceholders stringByAppendingString:placeholder];
+        }
+        
+        if ( ![leftPlaceholders isEqualToString:rightPlaceholders] ) {
+            // 两边占位符不匹配, 认为此条有问题
+            s = [s stringByAppendingString:@" // Unbalenced placeholder!"];
+            s = [s stringByAppendingString:@"\n"];
+            [errorData appendData:[s dataUsingEncoding:NSUTF8StringEncoding]];
+            continue;
+        }
     }
     
     NSString *logPath = [NSString stringWithFormat:@"%@/Desktop/StringFileFomatterLog.strings",NSHomeDirectory()];
