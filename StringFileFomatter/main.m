@@ -89,9 +89,11 @@ void analysis(NSString *path) {
         s = [s stringByReplacingOccurrencesOfString:@"% D" withString:@"%d"];
         s = [s stringByReplacingOccurrencesOfString:@"% u" withString:@"%u"];
         s = [s stringByReplacingOccurrencesOfString:@"% @" withString:@"%@"];
+
         if ( ![s hasSuffix:@"\\\";\";"] ) {
             s = [s stringByReplacingOccurrencesOfString:@"\";\";" withString:@"\";"];
         }
+
         if ( ![s hasSuffix:@"=\"\";"] ) {
             s = [s stringByReplacingOccurrencesOfString:@"=\"\"" withString:@"=\""];
             s = [s stringByReplacingOccurrencesOfString:@"\"\";" withString:@"\";"];
